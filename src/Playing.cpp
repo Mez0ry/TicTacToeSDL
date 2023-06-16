@@ -103,16 +103,10 @@ void Playing::HandleInput(const Base::Ref<EventHandler> event_handler){
           auto read_pos = m_Players[1].GetReadPos();
           auto& signs = m_Players[1].GetSigns();
 
-          for(int i = 0;i<read_pos;i++){
-            std::cout<< " before_pos: " << signs[i]->GetPosition() << '\n';
-          }
-          
           m_Board.MakeMove(m_Players[1],best_move);
 
           read_pos = m_Players[1].GetReadPos();
-          for(int i = 0;i<read_pos;i++){
-            std::cout<< " after_pos: " << signs[i]->GetPosition() << '\n';
-          }
+          
           m_Board.SwitchTurns();
         }
       }
