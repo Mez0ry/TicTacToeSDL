@@ -61,8 +61,8 @@ void Board::MakePseudoMove(Player& player,const Vec2& move_to){
   const Vec2 grid_top_left = m_GridTexture.TopLeft();
 
   Vec2 offset;
-  offset.x = move_to.x * (m_CellSize.GetWidth() + 15);
-  offset.y = move_to.y * (m_CellSize.GetHeight() + 15);
+  offset.x = move_to.x * (m_CellSize.GetWidth() + 10);
+  offset.y = move_to.y * (m_CellSize.GetHeight() + 10);
 
   Vec2 new_pos;
   new_pos.x = (grid_top_left.x + (m_CellSize.GetWidth() / 2) - (sign->GetSize().GetWidth() / 2))   + offset.x;
@@ -140,102 +140,104 @@ int Board::CalculateWinnerPlayerIndex(std::vector<Player>& players) const{
 }
 
 bool Board::CheckColsForWin(Player& player) const{
-  auto moves = GetMoves(player);
-  int cnt{};
-
-  int row = 0;
-
-  for(int j = 0; row < m_BoardSize.y;){
-    Vec2 pos = {j,row};
-    
-    auto it = std::find_if(moves.begin(),moves.end(),[&](const Vec2& move){return (move == pos);});
-    if(it != moves.end()){
-      cnt++;
-    }
-
-    if(cnt == m_BoardSize.y){
-      return true;
-    }
-
-    j++;
-    
-    if(j == m_BoardSize.y){
-      row++;
-      j = 0;
-      cnt = 0;
-    }
-
-  }
-
-  return (cnt == m_BoardSize.y);
+  return (GetWinningSequenceCols(player).size() == m_BoardSize.x);
 }
 
 bool Board::CheckRowsForWin(Player& player) const{
-  auto moves = GetMoves(player);
-  int cnt{};
-
-  int col = 0;
-
-  for(int j = 0; col < m_BoardSize.x;){
-    Vec2 pos = {col,j};
-    
-    auto it = std::find_if(moves.begin(),moves.end(),[&](const Vec2& move){return (move == pos);});
-    if(it != moves.end()){
-      cnt++;
-    }
-
-    if(cnt == m_BoardSize.y){
-      return true;
-    }
-
-    j++;
-
-    if(j == m_BoardSize.y){
-      col++;
-      j = 0;
-      cnt = 0;
-    }
-
-  }
-
-  return (cnt == m_BoardSize.y);
+  return (GetWinningSequenceRows(player).size() == m_BoardSize.y);
 }
 
 bool Board::CheckDiagonalsForWin(Player& player) const{
+  return (GetWinningSequenceDiags(player).size() == std::min(m_BoardSize.x, m_BoardSize.y));
+}
+
+std::vector<Vec2> Board::GetWinningSequenceCols(Player& player) const{
+  std::vector<Vec2> move_seq;
   auto moves = GetMoves(player);
-  
-  int diag_size = std::min((m_BoardSize.x - 1),(m_BoardSize.y - 1));
-  
-  int cnt{};
+
+  for(int i  = 0;i<m_BoardSize.y;i++){
+    for(int j = 0;j<m_BoardSize.x;j++){
+      Vec2 pos = {j,i};
+      auto it = std::find_if(moves.begin(),moves.end(),[&](const Vec2& move){return (move == pos);});
+      if(it != moves.end()){
+        move_seq.push_back(pos);
+        if(move_seq.size() == m_BoardSize.x){
+          return move_seq;
+        }
+      }
+    }
+    move_seq.clear();
+  }
+
+  return move_seq;
+}
+
+std::vector<Vec2> Board::GetWinningSequenceRows(Player& player) const{
+  std::vector<Vec2> move_seq;
+  auto moves = GetMoves(player);
+
+  for(int i = 0;i<m_BoardSize.x;i++){
+    for(int j = 0;j<m_BoardSize.y;j++){
+      Vec2 pos = {i,j};
+      auto it = std::find_if(moves.begin(),moves.end(),[&](const Vec2& move){return (move == pos);});
+      if(it != moves.end()){
+        move_seq.push_back(pos);
+        if(move_seq.size() == m_BoardSize.y){
+          return move_seq;
+        }
+      }
+    }
+    move_seq.clear();
+  }
+
+  return move_seq;
+}
+
+std::vector<Vec2> Board::GetWinningSequenceDiags(Player& player) const{
+  std::vector<Vec2> move_seq;
+  auto moves = GetMoves(player);
   
   for(int i = 0;i<m_BoardSize.y && i < m_BoardSize.x;i++){
     Vec2 pos = {i,i};
 
     auto it = std::find_if(moves.begin(),moves.end(),[&](const Vec2& move){return (move == pos);});
     if(it != moves.end()){
-      cnt++;
+      move_seq.push_back(pos);
+      if(move_seq.size() == std::min(m_BoardSize.x, m_BoardSize.y)){
+        return move_seq;
+      }
     }
   }
-  if(cnt == std::min(m_BoardSize.x, m_BoardSize.y)){
-    return true;
-  }
 
-  cnt = 0;
+  move_seq.clear();
 
   for(int i = m_BoardSize.x - 1,k = 0;i >= 0;i--){
     Vec2 pos = {i,k++};
 
     auto it = std::find_if(moves.begin(),moves.end(),[&](const Vec2& move){return (move == pos);});
     if(it != moves.end()){
-      cnt++;
+      move_seq.push_back(pos);
+      if(move_seq.size() == std::min(m_BoardSize.x, m_BoardSize.y)){
+        return move_seq;
+      }
     }
   }
 
-  if(cnt == std::min(m_BoardSize.x, m_BoardSize.y)){
-    return true;
-  }
+  move_seq.clear();
+  return move_seq;
+}
 
-  return false;
+std::vector<Vec2> Board::GetWinningSequence(Player& player) const{
+  if(std::vector<Vec2> cols = GetWinningSequenceCols(player),rows = GetWinningSequenceRows(player),diags = GetWinningSequenceDiags(player); !cols.empty() || !rows.empty() || !diags.empty()){
+    if(!cols.empty()){
+      return cols;
+    }else if(!rows.empty()){
+      return rows;
+    }else if(!diags.empty()){
+      return diags;
+    }
+  }
+  return {};
 }
 
 std::vector<Vec2> Board::GetMoves(Player& player) const{
@@ -357,4 +359,35 @@ std::vector<Vec2> Board::GetEmptyCells(std::vector<Player>& players) const{
   }
 
   return total_cells;
+}
+
+void Board::HighlightCell(const Base::Ref<Renderer> renderer,const Vec2& cell,Color color){
+  Texture texture;
+  texture.SetSize(ObjectSize(m_CellSize.GetWidth() * 0.8f,m_CellSize.GetHeight() * 0.8f));
+  auto texture_size = texture.GetSize();
+  texture = Texture::CreateTexture(renderer,SDL_PIXELFORMAT_ABGR8888,SDL_TEXTUREACCESS_STREAMING,texture_size.GetWidth(),texture_size.GetHeight());
+  
+  TextureGuard texture_guard(texture);
+  auto  pitch = texture_guard.GetPitch();
+  auto* pixels = texture_guard.GetPixels();
+
+  for(int i = 0;i<texture_size.GetWidth();i++){
+    for(int j = 0;j < texture_size.GetHeight();j++){
+      texture.SetPixelAt(pixels,texture_size.GetWidth(),{j,i},color);
+    }
+  }
+
+  const Vec2 grid_top_left = m_GridTexture.TopLeft();
+  Vec2 offset;
+  offset.x = cell.x * (m_CellSize.GetWidth() + 10);
+  offset.y = cell.y * (m_CellSize.GetHeight() + 10);
+
+  Vec2 new_pos;
+  new_pos.x = (grid_top_left.x + (m_CellSize.GetWidth() / 2) - (texture_size.GetWidth() / 2))   + offset.x;
+  new_pos.y = (grid_top_left.y + (m_CellSize.GetHeight() / 2) - (texture_size.GetHeight() / 2)) + offset.y;
+
+  SDL_SetTextureBlendMode(texture,SDL_BLENDMODE_BLEND);
+  SDL_SetTextureAlphaMod(texture,150);
+  texture.SetPosition(new_pos);
+  m_Renderer->Render(texture);
 }

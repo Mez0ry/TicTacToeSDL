@@ -158,9 +158,30 @@ void Playing::Update(float dt){
 
 #pragma GCC diagnostic pop
 
+#pragma GCC diagnostic push // Also works for clang compiler
+#pragma GCC diagnostic ignored "-Wswitch"
+
 void Playing::Render(){
   m_Renderer->Render(m_BackgroundTexture);
   m_Board.Render();
+
+  if(m_Board.GetBoardState() != Board::BoardState::EMPTY){
+    auto board_state = m_Board.GetBoardState();
+    switch(board_state){
+      case Board::BoardState::WIN:{
+        for(auto& move : m_Board.GetWinningSequence(m_Players[0])){
+          m_Board.HighlightCell(m_Renderer,move,{41,255,104,255});
+        }
+        break;
+      }
+      case Board::BoardState::LOSE:{
+        for(auto& move : m_Board.GetWinningSequence(m_Players[1])){
+           m_Board.HighlightCell(m_Renderer,move,{255,0,41,204});
+        }
+        break;
+      }
+    }
+  }
 
   for(auto& player : m_Players){
     for(size_t i = 0;i< player.GetReadPos();i++){
@@ -173,3 +194,4 @@ void Playing::Render(){
     m_Renderer->Render(m_WinnerText);
   }
 }
+#pragma GCC diagnostic pop

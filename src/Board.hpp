@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include "Player.hpp"
 #include <bitset>
+#include "TextureGuard.hpp"
+#include "SDL2/SDL_blendmode.h"
 
 class Renderer;
 class Player;
@@ -87,6 +89,11 @@ public:
   bool CheckRowsForWin(Player& player) const;
   bool CheckDiagonalsForWin(Player& player) const;
 
+  std::vector<Vec2> GetWinningSequenceCols(Player& player) const;
+  std::vector<Vec2> GetWinningSequenceRows(Player& player) const;
+  std::vector<Vec2> GetWinningSequenceDiags(Player& player) const;
+  std::vector<Vec2> GetWinningSequence(Player& player) const;
+
   std::vector<Vec2> GetMoves(Player& player) const;
 
   int Minimax(std::vector<Player>& players,Player& player, Player& opponent ,int alpha,int beta,int depth, bool is_maximazing);
@@ -109,6 +116,8 @@ public:
   BoardState GetBoardState() const {return m_BoardState;}
 
   bool IsTie(std::vector<Player>& players) const {return (GetEmptyCells(players).empty());}
+
+  void HighlightCell(const Base::Ref<Renderer> renderer,const Vec2& cell,Color color);
 
 private:
   static Vec2 m_BoardTopLeft;
