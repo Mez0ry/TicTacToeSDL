@@ -11,14 +11,14 @@ enum class SignType{
 class Sign : public Entity {
 public:
   Sign() = default;
-  Sign(const Base::Ref<Renderer> renderer, const std::string& path,SignType type);
+  Sign(const Core::Ref<Renderer> renderer, const std::string& path,SignType type);
   ~Sign();
 
   Texture& GetTexture() override;
-  Vec2& GetPosition() override;
+  Vec2i& GetPosition() override;
 
-  void SetPosition(const Vec2 &pos) override;
-  const Vec2& GetPosition() const override;
+  void SetPosition(const Vec2i &pos) override;
+  const Vec2i& GetPosition() const override;
 
   void SetSize(const ObjectSize &size) override;
   const ObjectSize GetSize() const override;
@@ -27,7 +27,7 @@ public:
   void SetSignType(SignType type) {m_SignType = type;}
 private:
   Texture m_Texture;
-  Vec2 m_Pos;
+  Vec2i m_Pos;
   SignType m_SignType;
 };
 

@@ -1,6 +1,6 @@
 #include "Sign.hpp"
 
-Sign::Sign(const Base::Ref<Renderer> renderer, const std::string& path,SignType type){
+Sign::Sign(const Core::Ref<Renderer> renderer, const std::string& path,SignType type){
   m_Texture.LoadTexture(renderer,path);
   SetSignType(type);
 }
@@ -13,15 +13,15 @@ Texture& Sign::GetTexture(){
     return m_Texture;
 }
 
-Vec2& Sign::GetPosition(){
+Vec2i& Sign::GetPosition(){
  return m_Pos;
 }
 
-void Sign::SetPosition(const Vec2 &pos){
+void Sign::SetPosition(const Vec2i &pos){
     m_Pos = pos;
 }
 
-const Vec2& Sign::GetPosition() const{
+const Vec2i& Sign::GetPosition() const{
     return m_Pos;
 }
 

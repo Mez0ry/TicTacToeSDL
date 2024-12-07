@@ -3,9 +3,8 @@
 #include <iostream>
 #include <cstdint>
 
-#include "ServiceLocator.hpp"
+#include "Engine.hpp"
 #include "EventHandler.hpp"
-#include "Timestamp.hpp"
 
 #include "Menu.hpp"
 #include "Playing.hpp"
@@ -23,7 +22,7 @@ public:
     Game();
     ~Game();
 
-    void Run();
+    bool Run();
 private:
     void HandleInput();
     void Update(float dt);

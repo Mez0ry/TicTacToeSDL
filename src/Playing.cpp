@@ -2,9 +2,8 @@
 #include "SceneManager.hpp"
 #include "Menu.hpp"
 
-Playing::Playing(const Base::Ref<Renderer> renderer, const Base::Ref<Window> window,SceneManager* scene_manager) : m_Board(renderer),m_SceneManager(scene_manager){
+Playing::Playing(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,SceneManager& scene_manager) : m_Board(renderer),m_SceneManager(scene_manager){
   m_Renderer = renderer;
-  m_Window = window;
   
   m_Players.resize(2);
 
@@ -22,7 +21,29 @@ Playing::Playing(const Base::Ref<Renderer> renderer, const Base::Ref<Window> win
   m_BackgroundTexture.LoadTexture(m_Renderer,"resources/board.png");
   m_BackgroundTexture.SetRect({0,0},ObjectSize(378,666));
   
-  OnResize();
+  std::chrono::milliseconds fade_timer_ms{10000};
+
+  m_WinnerFadeHelper.Setup(fade_timer_ms,[&](){
+    double t = std::clamp(0.0,1.0,m_WinnerFadeHelper.GetFadeTimer().GetTicks() * 0.0001);
+    m_WinnerColor.a = 255 + t * (0 - 255); //lerp 
+
+    switch(m_Board.GetBoardState()){
+      case Board::BoardState::WIN:{
+        m_WinnerText.LoadText(m_Renderer,"You won!",m_WinnerColor);
+        break;
+      }
+      case Board::BoardState::LOSE:{
+        m_WinnerText.LoadText(m_Renderer,"You lost!",m_WinnerColor);
+        break;
+      }
+      case Board::BoardState::TIE:{
+        m_WinnerText.LoadText(m_Renderer,"Tie!",m_WinnerColor);
+        break;
+      }
+    }
+  });
+
+  OnResize(window);
 }
 
 Playing::~Playing(){
@@ -30,13 +51,15 @@ Playing::~Playing(){
 }
 
 
-void Playing::OnResize(){
- m_Board.OnResize(m_Window);
+void Playing::OnResize(const Core::Ref<Window> window){
+ m_Board.OnResize(window);
  auto half_cell_size = m_Board.GetCellSize() / 2;
 
- auto[win_w,win_h] = m_Window->GetWindowSize();
+ auto[win_w,win_h] = window->GetWindowSize();
+ 
+ double scale_factor_w = 0.473,scale_factor_h = 0.952;
 
- m_BackgroundTexture.SetSize(ObjectSize(win_w * 0.473,win_h * 0.952));
+ m_BackgroundTexture.SetSize(ObjectSize(win_w * scale_factor_w,win_h * scale_factor_h));
  m_BackgroundTexture.SetPosition({(win_w / 2) - (m_BackgroundTexture.GetSize().GetWidth() / 2),(win_h / 2) - (m_BackgroundTexture.GetSize().GetHeight() / 2)});
  
  auto& grid_texture = m_Board.GetGridTexture();
@@ -51,7 +74,7 @@ void Playing::OnResize(){
     for(auto& sign : signs){
       sign->SetSize(half_cell_size);
 
-      Vec2 new_pos;
+      Vec2i new_pos;
       new_pos.x = (grid_texture.TopLeft().x + half_cell_size.GetWidth() - (sign->GetSize().GetWidth() / 2))   + (sign->GetPosition().x * (m_Board.GetCellSize().GetWidth() + 15));
       new_pos.y = (grid_texture.TopLeft().y + half_cell_size.GetHeight() - (sign->GetSize().GetHeight() / 2)) + (sign->GetPosition().y * (m_Board.GetCellSize().GetHeight() + 15));
 
@@ -66,27 +89,25 @@ void Playing::OnResize(){
 
 void Playing::OnCreate(){
   m_Renderer->SetRenderDrawColor({50,40,90,220});
+  m_WinnerFadeHelper.Reset();
 }
 
 void Playing::OnDestroy(){
-  m_StartTimerOnce = false;
   m_WinnerColor = {171,142,186,255};
   m_Board.OnDestroy();
 
  for(auto& player : m_Players){
-   player.OnDestroy();
+  player.OnDestroy();
  }
 }
 
-void Playing::HandleInput(const Base::Ref<EventHandler> event_handler){
-  auto& keyboard_input = event_handler->GetKeyboardInput();
-  auto& mouse_input = event_handler->GetMouseInput();
+void Playing::HandleInput(const Core::Ref<EventHandler> event_handler){
   
-  if(mouse_input.IsPressed(SDL_BUTTON_LEFT)){
-    Vec2 cursor_position = mouse_input.GetMousePosition();
+  if(MouseInput::IsPressed(SDL_BUTTON_LEFT)){
+    Vec2i cursor_position = MouseInput::GetMousePosition();
 
-    Vec2 sign_place_pos;
-    Vec2 diff = ((cursor_position - m_Board.GetGridTexture().TopLeft()));
+    Vec2i sign_place_pos;
+    Vec2i diff = ((cursor_position - m_Board.GetGridTexture().TopLeft()));
 
     ObjectSize cell_size = m_Board.GetCellSize();
     sign_place_pos.x = diff.x / (cell_size.GetWidth());
@@ -98,13 +119,13 @@ void Playing::HandleInput(const Base::Ref<EventHandler> event_handler){
 
       if(m_Players.size() > 1 && m_Players.back().IsBot()) {
         if(m_Board.IsCurrentTurn(m_Players.back())){
-          Vec2 best_move = m_Board.FindBestMove(m_Players,m_Players[1],true);
+          Vec2i best_move = m_Board.FindBestMove(m_Players,m_Players[1],true);
 
           auto read_pos = m_Players[1].GetReadPos();
           auto& signs = m_Players[1].GetSigns();
 
           m_Board.MakeMove(m_Players[1],best_move);
-
+          
           read_pos = m_Players[1].GetReadPos();
           
           m_Board.SwitchTurns();
@@ -123,37 +144,14 @@ void Playing::HandleInput(const Base::Ref<EventHandler> event_handler){
     }
   }
 }
+
 #pragma GCC diagnostic push // Also works for clang compiler
 #pragma GCC diagnostic ignored "-Wswitch"
 
 void Playing::Update(float dt){
-  if(m_Board.GetBoardState() != Board::BoardState::EMPTY){
-    if(!m_StartTimerOnce){
-      m_WinnerTextShowTimer.Start();
-      m_StartTimerOnce = true;
-    }
-    if(m_WinnerTextShowTimer.GetTicks() < (10 * 1000)){
-      double t = std::clamp(0.0,1.0,m_WinnerTextShowTimer.GetTicks() * 0.0001);
-      m_WinnerColor.a = 255 + t * (0 - 255); //lerp
-
-      switch(m_Board.GetBoardState()){
-        case Board::BoardState::WIN:{
-          m_WinnerText.LoadText(m_Renderer,"You won!",m_WinnerColor);
-          break;
-        }
-        case Board::BoardState::LOSE:{
-          m_WinnerText.LoadText(m_Renderer,"You lost!",m_WinnerColor);
-          break;
-        }
-        case Board::BoardState::TIE:{
-          m_WinnerText.LoadText(m_Renderer,"Tie!",m_WinnerColor);
-          break;
-        }
-      }
-    }else{
-      m_SceneManager->TransitionTo<Menu>();
-    }
-  }
+ if(m_Board.GetBoardState() != Board::BoardState::EMPTY  && m_WinnerFadeHelper.ExecuteFor()){
+  m_SceneManager.TransitionTo<Menu>();
+ }
 }
 
 #pragma GCC diagnostic pop
@@ -161,7 +159,7 @@ void Playing::Update(float dt){
 #pragma GCC diagnostic push // Also works for clang compiler
 #pragma GCC diagnostic ignored "-Wswitch"
 
-void Playing::Render(){
+void Playing::Render(const Core::Ref<Renderer> renderer){
   m_Renderer->Render(m_BackgroundTexture);
   m_Board.Render();
 

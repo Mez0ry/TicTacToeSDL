@@ -19,9 +19,7 @@ set(TicTacToe_HEADERS
     src/Menu.hpp
     src/Player.hpp
     src/Playing.hpp
-    src/SceneManager.hpp
     src/Sign.hpp
-    src/Timestamp.hpp
 )
 set(TicTacToe_SOURCES 
     src/main.cpp
@@ -31,9 +29,6 @@ set(TicTacToe_SOURCES
     src/Menu.cpp
     src/Player.cpp
     src/Playing.cpp
-    src/SceneManager.cpp
-    src/Sign.cpp
-    src/Timestamp.cpp
 )
                       
 add_executable(${ProjectName} ${TicTacToe_HEADERS} ${TicTacToe_SOURCES})

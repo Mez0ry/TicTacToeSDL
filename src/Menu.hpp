@@ -4,42 +4,34 @@
 #include "Renderer.hpp"
 #include "Window.hpp"
 
-#include "Text.hpp"
 #include <array>
 #include "EventHandler.hpp"
+#include "GUI/Button.hpp"
+#include "Texture.hpp"
 
 class SceneManager;
 
 class Menu : virtual public GameScene {
 private:
-
-struct MenuLabel{
-  MenuLabel(const char* label_name) : label(label_name){}
-  Text text[2];
-  uint8_t text_type_index = 0;
-  const char* label;
-};
-
+  Core::Ref<Renderer> m_Renderer;
+  SceneManager& m_SceneManager;
 public:
-  Menu(const Base::Ref<Renderer> renderer, const Base::Ref<Window> window, SceneManager* scene_manager);
+  Menu(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window, SceneManager& scene_manager);
   ~Menu();
   
-  void OnResize() override;
+  void OnResize(const Core::Ref<Window> window) override;
   void OnCreate() override;
-  void HandleInput(const Base::Ref<EventHandler> event_handler) override;
+  void HandleInput(const Core::Ref<EventHandler> event_handler) override;
   void Update(float dt) override;
-  void Render() override;
+  void Render(const Core::Ref<Renderer> renderer) override;
 
 private:
-  std::array<MenuLabel, 2> m_MenuOptions = {MenuLabel("Play"),MenuLabel("Exit")};
+  Texture m_RedSwitchPanel,m_GreenSwitchPanel;
+  Texture m_BackgroundTexture;
   
-  const SDL_Color m_RedColor = {255,0,0,255};
-  const SDL_Color m_WhiteColor = {255,255,255,255};
-
   Texture m_TitlePanelTexture;
   Text m_TitleText;
-  std::array<Texture,2> m_ButtonsTexture;
-  SceneManager* m_SceneManager;
+  std::vector<Core::Ref<Button>> m_Buttons;
 };
 
 #endif //! __MENU_HPP__
