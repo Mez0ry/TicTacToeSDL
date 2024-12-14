@@ -2,7 +2,7 @@
 #include "SceneManager.hpp"
 #include "Menu.hpp"
 
-Playing::Playing(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,SceneManager& scene_manager) : m_Board(renderer),m_SceneManager(scene_manager){
+Playing::Playing(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,SceneManager& scene_manager) :m_SceneManager(scene_manager), m_Board(renderer)  {
   m_Renderer = renderer;
   
   m_Players.resize(2);
@@ -21,11 +21,9 @@ Playing::Playing(const Core::Ref<Renderer> renderer, const Core::Ref<Window> win
   m_BackgroundTexture.LoadTexture(m_Renderer,"resources/board.png");
   m_BackgroundTexture.SetRect({0,0},ObjectSize(378,666));
   
-  std::chrono::milliseconds fade_timer_ms{10000};
 
-  m_WinnerFadeHelper.Setup(fade_timer_ms,[&](){
-    double t = std::clamp(0.0,1.0,m_WinnerFadeHelper.GetFadeTimer().GetTicks() * 0.0001);
-    m_WinnerColor.a = 255 + t * (0 - 255); //lerp 
+  m_WinnerTextKeyFrame.Setup(5,[&](float t){
+    m_WinnerColor.a = Stellar::Lerp(255,0,t);
 
     switch(m_Board.GetBoardState()){
       case Board::BoardState::WIN:{
@@ -38,6 +36,10 @@ Playing::Playing(const Core::Ref<Renderer> renderer, const Core::Ref<Window> win
       }
       case Board::BoardState::TIE:{
         m_WinnerText.LoadText(m_Renderer,"Tie!",m_WinnerColor);
+        break;
+      }
+      case Board::BoardState::EMPTY:{
+
         break;
       }
     }
@@ -89,7 +91,6 @@ void Playing::OnResize(const Core::Ref<Window> window){
 
 void Playing::OnCreate(){
   m_Renderer->SetRenderDrawColor({50,40,90,220});
-  m_WinnerFadeHelper.Reset();
 }
 
 void Playing::OnDestroy(){
@@ -99,16 +100,17 @@ void Playing::OnDestroy(){
  for(auto& player : m_Players){
   player.OnDestroy();
  }
+
+ m_WinnerTextKeyFrame.Restart();
 }
 
-void Playing::HandleInput(const Core::Ref<EventHandler> event_handler){
-  
+void Playing::HandleInput([[maybe_unused]] const Core::Ref<EventHandler> event_handler){
   if(MouseInput::IsPressed(SDL_BUTTON_LEFT)){
     Vec2i cursor_position = MouseInput::GetMousePosition();
 
     Vec2i sign_place_pos;
     Vec2i diff = ((cursor_position - m_Board.GetGridTexture().TopLeft()));
-
+    
     ObjectSize cell_size = m_Board.GetCellSize();
     sign_place_pos.x = diff.x / (cell_size.GetWidth());
     sign_place_pos.y = diff.y / (cell_size.GetHeight());
@@ -121,12 +123,7 @@ void Playing::HandleInput(const Core::Ref<EventHandler> event_handler){
         if(m_Board.IsCurrentTurn(m_Players.back())){
           Vec2i best_move = m_Board.FindBestMove(m_Players,m_Players[1],true);
 
-          auto read_pos = m_Players[1].GetReadPos();
-          auto& signs = m_Players[1].GetSigns();
-
           m_Board.MakeMove(m_Players[1],best_move);
-          
-          read_pos = m_Players[1].GetReadPos();
           
           m_Board.SwitchTurns();
         }
@@ -138,7 +135,7 @@ void Playing::HandleInput(const Core::Ref<EventHandler> event_handler){
         }else{
           m_Board.SetBoardState(Board::BoardState::LOSE);
         }
-      }else if(m_Board.IsTie(m_Players)){
+      }else if(m_Board.IsTie()){
         m_Board.SetBoardState(Board::BoardState::TIE);
       }
     }
@@ -149,7 +146,7 @@ void Playing::HandleInput(const Core::Ref<EventHandler> event_handler){
 #pragma GCC diagnostic ignored "-Wswitch"
 
 void Playing::Update(float dt){
- if(m_Board.GetBoardState() != Board::BoardState::EMPTY  && m_WinnerFadeHelper.ExecuteFor()){
+ if(m_Board.GetBoardState() != Board::BoardState::EMPTY  && m_WinnerTextKeyFrame.Update(dt)){
   m_SceneManager.TransitionTo<Menu>();
  }
 }
@@ -160,7 +157,7 @@ void Playing::Update(float dt){
 #pragma GCC diagnostic ignored "-Wswitch"
 
 void Playing::Render(const Core::Ref<Renderer> renderer){
-  m_Renderer->Render(m_BackgroundTexture);
+  renderer->Render(m_BackgroundTexture);
   m_Board.Render();
 
   if(m_Board.GetBoardState() != Board::BoardState::EMPTY){
@@ -168,13 +165,13 @@ void Playing::Render(const Core::Ref<Renderer> renderer){
     switch(board_state){
       case Board::BoardState::WIN:{
         for(auto& move : m_Board.GetWinningSequence(m_Players[0])){
-          m_Board.HighlightCell(m_Renderer,move,{41,255,104,255});
+          m_Board.HighlightCell(renderer,move,{41,255,104,255});
         }
         break;
       }
       case Board::BoardState::LOSE:{
         for(auto& move : m_Board.GetWinningSequence(m_Players[1])){
-           m_Board.HighlightCell(m_Renderer,move,{255,0,41,204});
+           m_Board.HighlightCell(renderer,move,{255,0,41,204});
         }
         break;
       }
@@ -184,12 +181,12 @@ void Playing::Render(const Core::Ref<Renderer> renderer){
   for(auto& player : m_Players){
     for(size_t i = 0;i< player.GetReadPos();i++){
       auto& sign = player.GetSigns()[i];
-      m_Renderer->Render(sign->GetTexture());
+      renderer->Render(sign->GetTexture());
     }
   }
   
   if(m_Board.GetBoardState() != Board::BoardState::EMPTY){
-    m_Renderer->Render(m_WinnerText);
+    renderer->Render(m_WinnerText);
   }
 }
 #pragma GCC diagnostic pop

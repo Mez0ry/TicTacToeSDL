@@ -77,7 +77,7 @@ void Board::RegisterMove(const Vec2i& move,Player& player){
 }
 
 void Board::UnRegisterMove(const Vec2i& move){
-  auto it = m_MovesVec.erase(std::remove_if(m_MovesVec.begin(),m_MovesVec.end(),[&](const MoveInfo& info){return (move == info.move);}),m_MovesVec.end());
+  m_MovesVec.erase(std::remove_if(m_MovesVec.begin(),m_MovesVec.end(),[&](const MoveInfo& info){return (move == info.move);}),m_MovesVec.end());
 }
 
 void Board::UnmakeMove(){
@@ -117,7 +117,7 @@ TerminalState Board::GetTerminalState(std::vector<Player>& players) const{
     }
   }
 
-  if(IsTie(players)){
+  if(IsTie()){
     return TerminalState::TIE;
   }
   
@@ -140,15 +140,15 @@ int Board::CalculateWinnerPlayerIndex(std::vector<Player>& players) const{
 }
 
 bool Board::CheckColsForWin(Player& player) const{
-  return (GetWinningSequenceCols(player).size() == m_BoardSize.x);
+  return (GetWinningSequenceCols(player).size() == (size_t)m_BoardSize.x);
 }
 
 bool Board::CheckRowsForWin(Player& player) const{
-  return (GetWinningSequenceRows(player).size() == m_BoardSize.y);
+  return (GetWinningSequenceRows(player).size() == (size_t)m_BoardSize.y);
 }
 
 bool Board::CheckDiagonalsForWin(Player& player) const{
-  return (GetWinningSequenceDiags(player).size() == std::min(m_BoardSize.x, m_BoardSize.y));
+  return (GetWinningSequenceDiags(player).size() == (size_t)std::min(m_BoardSize.x, m_BoardSize.y));
 }
 
 std::vector<Vec2i> Board::GetWinningSequenceCols(Player& player) const{
@@ -161,7 +161,7 @@ std::vector<Vec2i> Board::GetWinningSequenceCols(Player& player) const{
       auto it = std::find_if(moves.begin(),moves.end(),[&](const Vec2i& move){return (move == pos);});
       if(it != moves.end()){
         move_seq.push_back(pos);
-        if(move_seq.size() == m_BoardSize.x){
+        if(move_seq.size() == (size_t)m_BoardSize.x){
           return move_seq;
         }
       }
@@ -182,7 +182,7 @@ std::vector<Vec2i> Board::GetWinningSequenceRows(Player& player) const{
       auto it = std::find_if(moves.begin(),moves.end(),[&](const Vec2i& move){return (move == pos);});
       if(it != moves.end()){
         move_seq.push_back(pos);
-        if(move_seq.size() == m_BoardSize.y){
+        if(move_seq.size() == (size_t)m_BoardSize.y){
           return move_seq;
         }
       }
@@ -203,7 +203,7 @@ std::vector<Vec2i> Board::GetWinningSequenceDiags(Player& player) const{
     auto it = std::find_if(moves.begin(),moves.end(),[&](const Vec2i move){return (move == pos);});
     if(it != moves.end()){
       move_seq.push_back(pos);
-      if(move_seq.size() == std::min(m_BoardSize.x, m_BoardSize.y)){
+      if(move_seq.size() == (size_t)std::min(m_BoardSize.x, m_BoardSize.y)){
         return move_seq;
       }
     }
@@ -217,7 +217,7 @@ std::vector<Vec2i> Board::GetWinningSequenceDiags(Player& player) const{
     auto it = std::find_if(moves.begin(),moves.end(),[&](const Vec2i& move){return (move == pos);});
     if(it != moves.end()){
       move_seq.push_back(pos);
-      if(move_seq.size() == std::min(m_BoardSize.x, m_BoardSize.y)){
+      if(move_seq.size() == (size_t)std::min(m_BoardSize.x, m_BoardSize.y)){
         return move_seq;
       }
     }
@@ -247,7 +247,7 @@ std::vector<Vec2i> Board::GetMoves(Player& player) const{
 
   auto& signs = player.GetSigns();
 
-  for(int i = 0;i < player.GetReadPos();i++){
+  for(uint32_t i = 0;i < player.GetReadPos();i++){
     moves.push_back(signs[i]->GetPosition());
   }
   
@@ -278,7 +278,7 @@ int Board::Minimax(std::vector<Player>& players,Player& player, Player& opponent
   if(is_maximizing){
     int best_score = std::numeric_limits<int>::min();
 
-    for(auto& empty_cell : GetEmptyCells(players)){
+    for(auto& empty_cell : GetEmptyCells()){
 
       MakeMove(player,empty_cell);
 
@@ -297,7 +297,7 @@ int Board::Minimax(std::vector<Player>& players,Player& player, Player& opponent
   }else{
     int best_score = std::numeric_limits<int>::max();
 
-    for(auto& empty_cell : GetEmptyCells(players)){
+    for(auto& empty_cell : GetEmptyCells()){
       MakeMove(opponent,empty_cell);
 
       int eval = Minimax(players,player,opponent,alpha,beta,depth + 1,!is_maximizing);
@@ -327,7 +327,7 @@ Vec2i Board::FindBestMove(std::vector<Player>& players,Player& current_player,bo
 
   auto is_best_score = (is_opponent) ? [](int move_score, int best_score){return (move_score < best_score);} : [](int move_score, int best_score){return (move_score > best_score);};
   
-  auto available_cells = GetEmptyCells(players);
+  auto available_cells = GetEmptyCells();
 
   for(auto& empty_cell : available_cells){
     MakeMove(current_player,empty_cell);
@@ -344,7 +344,7 @@ Vec2i Board::FindBestMove(std::vector<Player>& players,Player& current_player,bo
   return best_move;
 }
 
-std::vector<Vec2i> Board::GetEmptyCells(std::vector<Player>& players) const{
+std::vector<Vec2i> Board::GetEmptyCells() const{
   std::vector<Vec2i> total_cells;
 
   for(auto i  = 0;i<m_BoardSize.y;i++){
@@ -370,7 +370,7 @@ void Board::HighlightCell(const Core::Ref<Renderer> renderer,const Vec2i& cell,C
   texture = Texture::CreateTexture(renderer,SDL_PIXELFORMAT_ABGR8888,SDL_TEXTUREACCESS_STREAMING,texture_size.GetWidth(),texture_size.GetHeight());
   
   TextureGuard texture_guard(texture);
-  auto  pitch = texture_guard.GetPitch();
+
   auto* pixels = texture_guard.GetPixels();
 
   for(int i = 0;i<texture_size.GetWidth();i++){

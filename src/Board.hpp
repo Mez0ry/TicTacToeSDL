@@ -99,7 +99,7 @@ public:
   int Minimax(std::vector<Player>& players,Player& player, Player& opponent ,int alpha,int beta,int depth, bool is_maximazing);
   Vec2i FindBestMove(std::vector<Player>& players,Player& current_player,bool is_opponent);
 
-  std::vector<Vec2i> GetEmptyCells(std::vector<Player>& players) const;
+  std::vector<Vec2i> GetEmptyCells() const;
 
   bool IsCurrentTurn(Player& player){
     return (m_CurrentTurn == player.GetSignType());
@@ -115,7 +115,7 @@ public:
 
   BoardState GetBoardState() const {return m_BoardState;}
 
-  bool IsTie(std::vector<Player>& players) const {return (GetEmptyCells(players).empty());}
+  bool IsTie() const {return (GetEmptyCells().empty());}
 
   void HighlightCell(const Core::Ref<Renderer> renderer,const Vec2i& cell,Color color);
 

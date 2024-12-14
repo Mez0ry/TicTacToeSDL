@@ -1,4 +1,5 @@
 #include "Exit.hpp"
+#include "Lerp.hpp"
 
 Exit::Exit(const Core::Ref<Renderer> renderer,const Core::Ref<Window> window, bool& is_running) : m_Renderer(renderer), m_IsRunning(is_running){
     m_Text.LoadFont("resources/fonts/Aileron/Aileron-SemiBold.otf",100);
@@ -7,13 +8,13 @@ Exit::Exit(const Core::Ref<Renderer> renderer,const Core::Ref<Window> window, bo
 
     OnResize(window);
 
-    std::chrono::milliseconds fade_timer_ms{10000};
-
-    m_TextFadeHelper.Setup(fade_timer_ms,[&](){
-        double t = std::clamp(0.0,1.0,m_TextFadeHelper.GetFadeTimer().GetTicks() * 0.0001);
-        m_BlackColor.r = 0 + t * (255 - 0);
-        m_BlackColor.g = 0 + t * (255 - 0);
-        m_BlackColor.b = 0 + t * (255 - 0);
+    m_ExitTextKF.Setup(4,[&](float t){
+        uint8_t start_value{std::numeric_limits<uint8_t>::min()}, 
+                end_value{std::numeric_limits<uint8_t>::max()};
+        
+        m_BlackColor.r = Stellar::Lerp(start_value,end_value,t);
+        m_BlackColor.g = Stellar::Lerp(start_value,end_value,t);
+        m_BlackColor.b = Stellar::Lerp(start_value,end_value,t);
         m_Text.LoadText(m_Renderer,"Thanks for playing",m_BlackColor);
     });
 
@@ -35,12 +36,12 @@ void Exit::OnCreate(){
     m_Renderer->SetRenderDrawColor({255,255,255,255});
 }
 
-void Exit::HandleInput(const Core::Ref<EventHandler> event_handler){
+void Exit::HandleInput([[maybe_unused]] const Core::Ref<EventHandler> event_handler){
 
 }
 
 void Exit::Update(float dt){
-   if(m_TextFadeHelper.ExecuteFor()){
+   if(m_ExitTextKF.Update(dt)){
     m_IsRunning = false;
    }
 }

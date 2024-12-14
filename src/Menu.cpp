@@ -1,8 +1,12 @@
 #include "Menu.hpp"
 #include "SceneManager.hpp"
+
 #include "Playing.hpp"
+#include "Settings.hpp"
 #include "Exit.hpp"
+
 #include <type_traits>
+#include "Easing.hpp"
 
 Menu::Menu(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,SceneManager& scene_manager) : m_Renderer(renderer), m_SceneManager(scene_manager){
     auto [win_w,win_h] = window->GetWindowSize();
@@ -14,32 +18,95 @@ Menu::Menu(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,Sc
     
     m_BackgroundTexture.SetSize(ObjectSize(win_w,win_h));
 
-    m_RedSwitchPanel.LoadTexture(renderer,"resources/UI/Switch05.png");
-    m_GreenSwitchPanel.LoadTexture(renderer,"resources/UI/Switch06.png");
-
     m_TitleText.LoadFont("resources/fonts/Wombyland/OpenType-TT/WombyLand.ttf",36);
     m_TitleText.LoadText(renderer,"Tic-Tac-Toe",{172,7,62,230});
 
     m_TitleText->SetSize(ObjectSize(240,36));
 
-    Texture button_texture(renderer,"resources/UI/Button15.png");
+    Texture button_texture(renderer,"resources/UI/Button16.png");
     auto buttons_font = Text::StaticLoadFont("resources/fonts/Aileron/Aileron-SemiBold.otf",100);
     
-    Button play_button(button_texture,"resources/fonts/Aileron/Aileron-SemiBold.otf","Play",color_white_t),
-           exit_button(button_texture,"resources/fonts/Aileron/Aileron-SemiBold.otf","Exit",color_white_t);
-    
-    play_button.OnClick([&](){
+    Core::Ref<Button> play_button = Core::CreateRef<Button>(button_texture,"resources/fonts/Aileron/Aileron-SemiBold.otf","Play",m_ButtonColor);
+    Core::Ref<Button> settings_button = Core::CreateRef<Button>(button_texture,"resources/fonts/Aileron/Aileron-SemiBold.otf","Settings",m_ButtonColor);
+    Core::Ref<Button> exit_button = Core::CreateRef<Button>(button_texture,"resources/fonts/Aileron/Aileron-SemiBold.otf","Exit",m_ButtonColor);
+           
+    std::chrono::milliseconds ease_in_bounce_ms{6000};
+    std::chrono::milliseconds ease_out_bounce_ms{11111};
+
+    play_button->OnClick([&](){
         m_SceneManager.TransitionTo<Menu,Playing>();
     });
 
-    exit_button.OnClick([&](){
+    exit_button->OnClick([&](){
         m_SceneManager.TransitionTo<Menu,Exit>();
     });
 
-    m_Buttons.push_back(Core::CreateRef<Button>(play_button));
-    m_Buttons.push_back(Core::CreateRef<Button>(exit_button));
+    settings_button->OnClick([&](){
+        m_SceneManager.TransitionTo<Menu,Settings>();
+    });
+
+    m_Buttons.push_back(play_button);
+    m_Buttons.push_back(settings_button);
+    m_Buttons.push_back(exit_button);
     
     OnResize(window);
+
+    m_TargetPlayButtonPos = play_button->GetPosition();
+    m_TargetExitButtonPos = exit_button->GetPosition();
+    m_TargetSettingsButtonPos = settings_button->GetPosition(); 
+
+    m_DefaultPlayButtonPosX = 0 - play_button->GetSize().GetWidth();
+    m_DefaultSettingsButtonPosX = win_w + settings_button->GetSize().GetWidth();
+    m_DefaultExitButtonPosX = 0 - exit_button->GetSize().GetWidth();
+
+    m_ButtonKeyFrame.Setup(3,[&](float t){
+        auto color = m_ButtonColor;
+        color.a = (Stellar::Lerp(0,255,Stellar::Easing::EaseOutQuad(t)));
+
+        
+        int dx_play_button =  (Stellar::Lerp(m_DefaultPlayButtonPosX,m_TargetPlayButtonPos.x,Stellar::Easing::EaseInOutCubic(t)));
+        m_Buttons[0]->SetPosition({dx_play_button,m_TargetPlayButtonPos.y});
+        m_Buttons[0]->ChangeTextColor(color);
+
+        int dx_settings_button =  (Stellar::Lerp(m_DefaultSettingsButtonPosX,m_TargetSettingsButtonPos.x,Stellar::Easing::EaseInOutCubic(t)));
+        m_Buttons[1]->SetPosition({dx_settings_button,m_TargetSettingsButtonPos.y});
+        m_Buttons[1]->ChangeTextColor(color);
+
+        int dx_exit_button =  (Stellar::Lerp(m_DefaultExitButtonPosX,m_TargetExitButtonPos.x,Stellar::Easing::EaseInOutCubic(t)));
+        m_Buttons[2]->SetPosition({dx_exit_button,m_TargetExitButtonPos.y});
+        m_Buttons[2]->ChangeTextColor(color);
+    });
+
+    m_TitleText->SetOrigin(m_TitleText->GetPosition());
+    m_TitlePanelTexture.SetOrigin(m_TitlePanelTexture.GetPosition());
+    
+    m_TitleKFOut.Setup(2,[&](float t){
+        auto text_origin = m_TitleText->GetOrigin();
+        auto panel_origin = m_TitlePanelTexture.GetOrigin();
+
+        int dy_text =  (Stellar::Lerp(text_origin.y + 15,text_origin.y,Stellar::Easing::EaseOutBounce(t)));
+        int dy_panel = (Stellar::Lerp(panel_origin.y + 15,panel_origin.y,Stellar::Easing::EaseOutBounce(t)));
+
+        Vec2i new_text_pos = {text_origin.x,dy_text};
+        Vec2i new_panel_pos = {panel_origin.x,dy_panel};
+
+        m_TitleText->SetPosition(new_text_pos);
+        m_TitlePanelTexture.SetPosition(new_panel_pos);
+    });
+
+    m_TitleKFIn.Setup(4,[&](float t){
+        auto text_origin = m_TitleText->GetOrigin();
+        auto panel_origin = m_TitlePanelTexture.GetOrigin();
+
+        int dy_text =  (Stellar::Lerp(text_origin.y,text_origin.y + 15,Stellar::Easing::EaseInBounce(t)));
+        int dy_panel = (Stellar::Lerp(panel_origin.y ,panel_origin.y + 15,Stellar::Easing::EaseInBounce(t)));
+
+        Vec2i new_text_pos = {text_origin.x,dy_text};
+        Vec2i new_panel_pos = {panel_origin.x,dy_panel};
+
+        m_TitleText->SetPosition(new_text_pos);
+        m_TitlePanelTexture.SetPosition(new_panel_pos);
+    });
 }
 
 Menu::~Menu(){
@@ -59,7 +126,7 @@ void Menu::OnResize(const Core::Ref<Window> window) {
 
         Vec2 pos;
         pos.x = (win_w / 2) - (menu_option_size_dst.GetWidth() / 2);
-        pos.y = ((win_h / 2) - (menu_option_size_dst.GetHeight() * 1.2)) + y_offset;
+        pos.y = ((win_h / 2) - (menu_option_size_dst.GetHeight() * 2)) + y_offset;
         
         button->SetRect(pos,menu_option_size_dst);
         
@@ -80,11 +147,21 @@ void Menu::OnResize(const Core::Ref<Window> window) {
     pos.y = (m_TitleText->GetPosition().y - (diff.GetHeight() / 2));
 
     m_TitlePanelTexture.SetPosition(pos);
-    m_BackgroundTexture.SetSize(ObjectSize(win_w,win_h));
+    m_BackgroundTexture.SetSize(ObjectSize(win_w + 100,win_h + 100));
+    Vec2i centered_pos = {-50,-50};
+    m_BackgroundTexture.SetPosition(centered_pos);
+
 }
 
 void Menu::OnCreate(){
-    m_Renderer->SetRenderDrawColor({50,40,90,220});
+    m_Renderer->SetRenderDrawColor({0,255,212,250});
+    m_TitleKFIn.Restart();
+    m_TitleKFOut.Restart();
+}
+
+void Menu::OnDestroy()
+{
+
 }
 
 void Menu::HandleInput(const Core::Ref<EventHandler> event_handler){
@@ -95,21 +172,25 @@ void Menu::HandleInput(const Core::Ref<EventHandler> event_handler){
     
     if(button->IsHovered()){
         button->ChangeTextColor(color_red_t);
-        button->ShareSDLTexture(m_GreenSwitchPanel);
     }else{
-        button->ChangeTextColor(color_white_t);
-        button->ShareSDLTexture(m_RedSwitchPanel);
+        button->ChangeTextColor(m_ButtonColor);
     }
   }
 }
 
 void Menu::Update(float dt){
-    
+    if(m_TitleKFIn.Update(dt)){
+        m_TitleKFOut.Update(dt);
+    }
+
+    m_ButtonKeyFrame.Update(dt);
 }
 
 void Menu::Render(const Core::Ref<Renderer> renderer){
-    renderer->Render(m_BackgroundTexture);
+    renderer->SetRenderDrawColor({0,255,212,250});
 
+    renderer->Render(m_BackgroundTexture);
+    
     for(auto& button : m_Buttons){
         if(button){
             button->Render(renderer);
@@ -117,5 +198,5 @@ void Menu::Render(const Core::Ref<Renderer> renderer){
     }
     
     renderer->Render(m_TitlePanelTexture);
-    renderer->Render(m_TitleText); 
+    renderer->Render(m_TitleText);
 }

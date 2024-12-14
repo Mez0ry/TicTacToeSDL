@@ -1,16 +1,16 @@
-#ifndef __EXIT_HPP__
-#define __EXIT_HPP__
+#ifndef __SETTINGS_HPP__
+#define __SETTINGS_HPP__
 #include "GameScene.hpp"
+
 #include "Text.hpp"
 
-#include <mutex>
 #include "KeyFrame.hpp"
-class Exit : virtual public GameScene {
+class Settings : virtual public GameScene {
 private:
   Core::Ref<Renderer> m_Renderer;
 public:
-  Exit(const Core::Ref<Renderer> renderer,const Core::Ref<Window> window,bool& is_running);
-  ~Exit();
+  Settings(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,SceneManager& scene_manager);
+  ~Settings();
 
   void OnResize(const Core::Ref<Window> window) override;
   void OnCreate() override;
@@ -18,12 +18,8 @@ public:
   void HandleInput(const Core::Ref<EventHandler> event_handler) override;
   void Update(float dt) override;
   void Render(const Core::Ref<Renderer> renderer) override;
-
 private:
-  bool& m_IsRunning;
-  Text m_Text;
-  Stellar::KeyFrame m_ExitTextKF;
-  Color m_BlackColor = {0,0,0,255};
+    Texture m_BackgroundTexture;
 };
 
-#endif //! __EXIT_HPP__
+#endif // __SETTINGS_HPP__

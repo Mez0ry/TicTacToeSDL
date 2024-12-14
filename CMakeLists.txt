@@ -11,35 +11,37 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
 
 set(TicTacToe_HEADERS 
-    src/Board.hpp
-    src/Entity.hpp
-    src/Exit.hpp
-    src/Game.hpp
-    src/GameScene.hpp
-    src/Menu.hpp
-    src/Player.hpp
-    src/Playing.hpp
-    src/Sign.hpp
+src/Board.hpp
+src/Entity.hpp
+src/Exit.hpp
+src/Game.hpp
+src/Menu.hpp
+src/Player.hpp
+src/Playing.hpp
+src/Settings.hpp
+src/Sign.hpp
 )
 set(TicTacToe_SOURCES 
-    src/main.cpp
-    src/Board.cpp
-    src/Exit.cpp
-    src/Game.cpp
-    src/Menu.cpp
-    src/Player.cpp
-    src/Playing.cpp
+src/main.cpp
+src/Board.cpp
+src/Exit.cpp
+src/Game.cpp
+src/Menu.cpp
+src/Player.cpp
+src/Playing.cpp
+src/Settings.cpp
+src/Sign.cpp
 )
-                      
+
 add_executable(${ProjectName} ${TicTacToe_HEADERS} ${TicTacToe_SOURCES})
 
-# add_custom_command(TARGET ${ProjectName} PRE_BUILD
-#                 COMMAND ${CMAKE_COMMAND} -E copy_directory
-#                     ${CMAKE_SOURCE_DIR}/resources/ $<TARGET_FILE_DIR:${ProjectName}>)
+add_custom_command(TARGET ${ProjectName} PRE_BUILD
+COMMAND ${CMAKE_COMMAND} -E copy_directory
+${CMAKE_SOURCE_DIR}/resources/ $<TARGET_FILE_DIR:${ProjectName}>)
 
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
+target_include_directories(${ProjectName} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/vendor/Stellar/include)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/Stellar)
-target_include_directories(${ProjectName} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/vendor/Stellar/Stellar)
-target_link_libraries(${ProjectName} Stellar)
+target_link_libraries(${ProjectName} fmt Stellar)

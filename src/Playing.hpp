@@ -7,7 +7,7 @@
 #include "EventHandler.hpp"
 #include "Text.hpp"
 #include <cmath>
-#include "FadeHelper.hpp"
+#include "KeyFrame.hpp"
 
 class SceneManager;
 
@@ -32,7 +32,7 @@ private:
   Texture m_BackgroundTexture;
   std::vector<Player> m_Players;
   
-  FadeHelper<double,std::milli> m_WinnerFadeHelper;
+  Stellar::KeyFrame m_WinnerTextKeyFrame;
   Text m_WinnerText;
   SDL_Color m_WinnerColor = {171,142,186,255};
 };

@@ -1,4 +1,13 @@
 #include "Game.hpp"
+#include "Timer.hpp"
+#include "Engine.hpp"
+#include "EventHandler.hpp"
+
+#include "Menu.hpp"
+#include "Playing.hpp"
+#include "Settings.hpp"
+
+#include "Exit.hpp"
 
 Game::Game() : m_bIsRunning(true) {
   if(!Engine::Initialize(SDL_INIT_EVERYTHING,IMG_INIT_PNG | IMG_INIT_JPG,true)){
@@ -12,22 +21,15 @@ Game::Game() : m_bIsRunning(true) {
   m_SceneManager.AddScene<Menu>(Engine::GetModule<Renderer>(),Engine::GetModule<Window>(),m_SceneManager);
   m_SceneManager.AddChildScene<Menu,Playing>(Engine::GetModule<Renderer>(),Engine::GetModule<Window>(),m_SceneManager);
   m_SceneManager.AddChildScene<Menu,Exit>(Engine::GetModule<Renderer>(),Engine::GetModule<Window>(),m_bIsRunning);
+  m_SceneManager.AddChildScene<Menu,Settings>(Engine::GetModule<Renderer>(),Engine::GetModule<Window>(),m_SceneManager);
 }
 
 Game::~Game() {}
 
 bool Game::Run() {
-
-  //The frames per second timer
-  Timer fps_timer;
-
-  //The frames per second cap timer
   Timer cap_timer;
   
   Timer step_timer;
-  
-  int counted_frames = 0;
-  fps_timer.Start();
   
   while (m_bIsRunning)
   {
@@ -35,20 +37,21 @@ bool Game::Run() {
     Engine::GetModule<Renderer>()->RenderClear();
 
     HandleInput();
-    float dt = step_timer.GetTicks() / 1000.0f;
-    Update(dt * ((m_fps / 2) - 0.1f));
+
+    double dt = step_timer.GetTicks() / 1000.f;
+    
+    Update(dt);
+
     step_timer.Start();
+
     Render();
     
     Engine::GetModule<Renderer>()->RenderPresent();
 
-    ++counted_frames;
-
-    int frame_ticks = cap_timer.GetTicks();
-
-    if(m_frameDelay > frame_ticks)
+    auto elapsed = cap_timer.GetTicks();
+    if(elapsed <= 10)
     {
-      SDL_Delay(m_frameDelay - frame_ticks);
+      SDL_Delay(10 - elapsed);
     }
 
   }
