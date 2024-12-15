@@ -29,9 +29,6 @@ Menu::Menu(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,Sc
     Core::Ref<Button> play_button = Core::CreateRef<Button>(button_texture,"resources/fonts/Aileron/Aileron-SemiBold.otf","Play",m_ButtonColor);
     Core::Ref<Button> settings_button = Core::CreateRef<Button>(button_texture,"resources/fonts/Aileron/Aileron-SemiBold.otf","Settings",m_ButtonColor);
     Core::Ref<Button> exit_button = Core::CreateRef<Button>(button_texture,"resources/fonts/Aileron/Aileron-SemiBold.otf","Exit",m_ButtonColor);
-           
-    std::chrono::milliseconds ease_in_bounce_ms{6000};
-    std::chrono::milliseconds ease_out_bounce_ms{11111};
 
     play_button->OnClick([&](){
         m_SceneManager.TransitionTo<Menu,Playing>();
@@ -63,7 +60,6 @@ Menu::Menu(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,Sc
         auto color = m_ButtonColor;
         color.a = (Stellar::Lerp(0,255,Stellar::Easing::EaseOutQuad(t)));
 
-        
         int dx_play_button =  (Stellar::Lerp(m_DefaultPlayButtonPosX,m_TargetPlayButtonPos.x,Stellar::Easing::EaseInOutCubic(t)));
         m_Buttons[0]->SetPosition({dx_play_button,m_TargetPlayButtonPos.y});
         m_Buttons[0]->ChangeTextColor(color);
@@ -77,32 +73,27 @@ Menu::Menu(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,Sc
         m_Buttons[2]->ChangeTextColor(color);
     });
 
-    m_TitleText->SetOrigin(m_TitleText->GetPosition());
-    m_TitlePanelTexture.SetOrigin(m_TitlePanelTexture.GetPosition());
-    
+    m_TmpTitleTextPos = m_TitleText->GetPosition();
+    m_TmpPanelTexturePos = m_TitlePanelTexture.GetPosition();
+
     m_TitleKFOut.Setup(2,[&](float t){
-        auto text_origin = m_TitleText->GetOrigin();
-        auto panel_origin = m_TitlePanelTexture.GetOrigin();
+        int dy_text =  (Stellar::Lerp(m_TmpTitleTextPos.y + 15,m_TmpTitleTextPos.y,Stellar::Easing::EaseOutBounce(t)));
+        int dy_panel = (Stellar::Lerp(m_TmpPanelTexturePos.y + 15,m_TmpPanelTexturePos.y,Stellar::Easing::EaseOutBounce(t)));
 
-        int dy_text =  (Stellar::Lerp(text_origin.y + 15,text_origin.y,Stellar::Easing::EaseOutBounce(t)));
-        int dy_panel = (Stellar::Lerp(panel_origin.y + 15,panel_origin.y,Stellar::Easing::EaseOutBounce(t)));
-
-        Vec2i new_text_pos = {text_origin.x,dy_text};
-        Vec2i new_panel_pos = {panel_origin.x,dy_panel};
+        Vec2i new_text_pos = {m_TmpTitleTextPos.x,dy_text};
+        Vec2i new_panel_pos = {m_TmpPanelTexturePos.x,dy_panel};
 
         m_TitleText->SetPosition(new_text_pos);
         m_TitlePanelTexture.SetPosition(new_panel_pos);
     });
 
     m_TitleKFIn.Setup(4,[&](float t){
-        auto text_origin = m_TitleText->GetOrigin();
-        auto panel_origin = m_TitlePanelTexture.GetOrigin();
 
-        int dy_text =  (Stellar::Lerp(text_origin.y,text_origin.y + 15,Stellar::Easing::EaseInBounce(t)));
-        int dy_panel = (Stellar::Lerp(panel_origin.y ,panel_origin.y + 15,Stellar::Easing::EaseInBounce(t)));
+        int dy_text =  (Stellar::Lerp(m_TmpTitleTextPos.y,m_TmpTitleTextPos.y + 15,Stellar::Easing::EaseInBounce(t)));
+        int dy_panel = (Stellar::Lerp(m_TmpPanelTexturePos.y ,m_TmpPanelTexturePos.y + 15,Stellar::Easing::EaseInBounce(t)));
 
-        Vec2i new_text_pos = {text_origin.x,dy_text};
-        Vec2i new_panel_pos = {panel_origin.x,dy_panel};
+        Vec2i new_text_pos = {m_TmpTitleTextPos.x,dy_text};
+        Vec2i new_panel_pos = {m_TmpPanelTexturePos.x,dy_panel};
 
         m_TitleText->SetPosition(new_text_pos);
         m_TitlePanelTexture.SetPosition(new_panel_pos);

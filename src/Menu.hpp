@@ -34,6 +34,7 @@ private:
   Stellar::KeyFrame m_TitleKFIn,m_TitleKFOut;
   Texture m_TitlePanelTexture;
   Text m_TitleText;
+  Vec2i m_TmpTitleTextPos, m_TmpPanelTexturePos;
   
   std::vector<Core::Ref<Button>> m_Buttons;
   const Color m_ButtonColor = {68,220,236,250};
