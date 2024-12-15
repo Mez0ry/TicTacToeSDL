@@ -45,8 +45,21 @@ Menu::Menu(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,Sc
     m_Buttons.push_back(play_button);
     m_Buttons.push_back(settings_button);
     m_Buttons.push_back(exit_button);
-    
+
+    m_SelectPanelTexture.LoadTexture(renderer,"resources/UI/SelectPanel03.png");
+
+    SDL_SetTextureBlendMode(m_SelectPanelTexture,SDL_BLENDMODE_BLEND);
+    SDL_SetTextureAlphaMod(m_SelectPanelTexture,0);
+
     OnResize(window);
+
+    m_SelectPanelKf.Setup(4,[&](float t){
+        uint8_t a{};
+        a = (Stellar::Lerp(0,255,Stellar::Easing::EaseInOutCubic(t)));
+
+        SDL_SetTextureBlendMode(m_SelectPanelTexture,SDL_BLENDMODE_BLEND);
+        SDL_SetTextureAlphaMod(m_SelectPanelTexture,a);
+    });
 
     m_TargetPlayButtonPos = play_button->GetPosition();
     m_TargetExitButtonPos = exit_button->GetPosition();
@@ -142,12 +155,21 @@ void Menu::OnResize(const Core::Ref<Window> window) {
     Vec2i centered_pos = {-50,-50};
     m_BackgroundTexture.SetPosition(centered_pos);
 
+    auto top_button_size = m_Buttons[0]->GetSize();
+    
+    m_SelectPanelTexture.SetSize({top_button_size.GetWidth() * 2,y_offset});
+    
+    Vec2i top_button_pos = m_Buttons[0]->GetPosition();
+
+    m_SelectPanelTexture.SetPosition({(top_button_pos.x + (top_button_size.GetWidth() / 2)) - (m_SelectPanelTexture.GetSize().GetWidth() / 2), (top_button_pos.y - (top_button_size.GetHeight() / 2))});
 }
 
 void Menu::OnCreate(){
-    m_Renderer->SetRenderDrawColor({0,255,212,250});
+    m_Renderer->SetRenderDrawColor({0,255,212,255});
     m_TitleKFIn.Restart();
     m_TitleKFOut.Restart();
+    m_SelectPanelKf.Restart();
+    m_ButtonKeyFrame.Restart();
 }
 
 void Menu::OnDestroy()
@@ -175,13 +197,14 @@ void Menu::Update(float dt){
     }
 
     m_ButtonKeyFrame.Update(dt);
+    m_SelectPanelKf.Update(dt);
 }
 
 void Menu::Render(const Core::Ref<Renderer> renderer){
-    renderer->SetRenderDrawColor({0,255,212,250});
+    renderer->SetRenderDrawColor({0,255,212,255});
 
     renderer->Render(m_BackgroundTexture);
-    
+    renderer->Render(m_SelectPanelTexture);
     for(auto& button : m_Buttons){
         if(button){
             button->Render(renderer);
