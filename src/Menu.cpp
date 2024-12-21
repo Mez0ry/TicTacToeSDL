@@ -17,18 +17,18 @@ Menu::Menu(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,Sc
     m_BackgroundTexture.LoadTexture(renderer,"resources/UI/MainPanel01.png");
     
     m_BackgroundTexture.SetSize(ObjectSize(win_w,win_h));
-
-    m_TitleText.LoadFont("resources/fonts/Wombyland/OpenType-TT/WombyLand.ttf",36);
-    m_TitleText.LoadText(renderer,"Tic-Tac-Toe",{172,7,62,230});
-
-    m_TitleText->SetSize(ObjectSize(240,36));
-
-    Texture button_texture(renderer,"resources/UI/Button16.png");
-    auto buttons_font = Text::StaticLoadFont("resources/fonts/Aileron/Aileron-SemiBold.otf",100);
     
-    Core::Ref<Button> play_button = Core::CreateRef<Button>(button_texture,"resources/fonts/Aileron/Aileron-SemiBold.otf","Play",m_ButtonColor);
-    Core::Ref<Button> settings_button = Core::CreateRef<Button>(button_texture,"resources/fonts/Aileron/Aileron-SemiBold.otf","Settings",m_ButtonColor);
-    Core::Ref<Button> exit_button = Core::CreateRef<Button>(button_texture,"resources/fonts/Aileron/Aileron-SemiBold.otf","Exit",m_ButtonColor);
+    m_TitleText.LoadFont("resources/fonts/road-rage/Road_Rage.otf",60);
+    m_TitleText.LoadText(renderer,"Tic-Tac-Toe",{136, 168, 242,230});
+
+    m_TitleText->SetSize(ObjectSize(240,60));
+
+    Texture button_texture(renderer,"resources/UI/Button02.png");
+    auto buttons_font = Text::StaticLoadFont("resources/fonts/road-rage/Road_Rage.otf",100);
+    
+    Core::Ref<Button> play_button = Core::CreateRef<Button>(button_texture,buttons_font,"Play",m_ButtonColor);
+    Core::Ref<Button> settings_button = Core::CreateRef<Button>(button_texture,buttons_font,"Settings",m_ButtonColor);
+    Core::Ref<Button> exit_button = Core::CreateRef<Button>(button_texture,buttons_font,"Exit",m_ButtonColor);
 
     play_button->OnClick([&](){
         m_SceneManager.TransitionTo<Menu,Playing>();
@@ -89,7 +89,7 @@ Menu::Menu(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,Sc
     m_TmpTitleTextPos = m_TitleText->GetPosition();
     m_TmpPanelTexturePos = m_TitlePanelTexture.GetPosition();
 
-    m_TitleKFOut.Setup(2,[&](float t){
+    m_TitleKFOut.Setup(4,[&](float t){
         int dy_text =  (Stellar::Lerp(m_TmpTitleTextPos.y + 15,m_TmpTitleTextPos.y,Stellar::Easing::EaseOutBounce(t)));
         int dy_panel = (Stellar::Lerp(m_TmpPanelTexturePos.y + 15,m_TmpPanelTexturePos.y,Stellar::Easing::EaseOutBounce(t)));
 
@@ -100,7 +100,7 @@ Menu::Menu(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,Sc
         m_TitlePanelTexture.SetPosition(new_panel_pos);
     });
 
-    m_TitleKFIn.Setup(4,[&](float t){
+    m_TitleKFIn.Setup(3,[&](float t){
 
         int dy_text =  (Stellar::Lerp(m_TmpTitleTextPos.y,m_TmpTitleTextPos.y + 15,Stellar::Easing::EaseInBounce(t)));
         int dy_panel = (Stellar::Lerp(m_TmpPanelTexturePos.y ,m_TmpPanelTexturePos.y + 15,Stellar::Easing::EaseInBounce(t)));
@@ -111,6 +111,7 @@ Menu::Menu(const Core::Ref<Renderer> renderer, const Core::Ref<Window> window,Sc
         m_TitleText->SetPosition(new_text_pos);
         m_TitlePanelTexture.SetPosition(new_panel_pos);
     });
+ 
 }
 
 Menu::~Menu(){
@@ -122,7 +123,7 @@ void Menu::OnResize(const Core::Ref<Window> window) {
 
     std::tie(win_w,win_h) = window->GetWindowSize();
 
-    ObjectSize menu_option_size_dst(125,65);
+    ObjectSize menu_option_size_dst(125,75);
 
     int y_offset = 0;
     
@@ -132,11 +133,13 @@ void Menu::OnResize(const Core::Ref<Window> window) {
         pos.x = (win_w / 2) - (menu_option_size_dst.GetWidth() / 2);
         pos.y = ((win_h / 2) - (menu_option_size_dst.GetHeight() * 2)) + y_offset;
         
+        pos.y += 35;
+
         button->SetRect(pos,menu_option_size_dst);
-        
+            
         y_offset += (menu_option_size_dst.GetHeight() * 2);
     }
-
+    
     auto title_size = m_TitleText->GetSize();
 
     m_TitleText->SetPosition({win_w / 2 - (title_size.GetWidth() / 2), static_cast<int>(win_h * 0.1f)});
@@ -184,9 +187,9 @@ void Menu::HandleInput(const Core::Ref<EventHandler> event_handler){
     }
     
     if(button->IsHovered()){
-        button->ChangeTextColor(color_red_t);
+        button->ChangeTextColor({68,220,236,250});
     }else{
-        button->ChangeTextColor(m_ButtonColor);
+        button->ChangeTextColor(m_ButtonColor); 
     }
   }
 }
