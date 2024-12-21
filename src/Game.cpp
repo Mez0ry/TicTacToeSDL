@@ -14,6 +14,8 @@ Game::Game() : m_bIsRunning(true) {
     STELLAR_CRITICAL_THROW(std::runtime_error,"","Failed to initialize engine");
   }
 
+  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
+
   Engine::RegisterModule<Window>("Tic-Tac-Toe",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,800,700, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
   Engine::RegisterModule<Renderer>(Engine::GetModule<Window>(),-1,SDL_RENDERER_ACCELERATED);
   Engine::RegisterModule<EventHandler>();
